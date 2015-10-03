@@ -5,62 +5,70 @@
 # referencia para o registro da região anterior e ultimo elemento é uma referencia para o registro da região posterior
 
 
-# Faz o registro de ocupação de um certo tamanho numa regiao_livre da memória
-def insere(nome, tamanho, regiao_livre):
-    if regiao_livre[0] is not None or tamanho > regiao_livre[2]:
-        raise ValueError
-    regiao_livre[0] = nome
-    if tamanho < regiao_livre[2]:
-        regiao_livre[2], regiao_livre[4] = tamanho, [None, regiao_livre[1] + tamanho, regiao_livre[2] - tamanho,
-                                                     regiao_livre, regiao_livre[4]]
+class Registro(object):
+    registros = []
+    registro = None
 
+    def __init__(self, tamanho):
+        self.registros.append(None)  # Não tem nome
+        self.registros.append(0)  # Posição inicial
+        self.registros.append(tamanho)  # Tamanho inicial
+        self.registros.append(self.registros)  # lista anterior (lista circular)
+        self.registros.append(self.registros)  # lista posterior (lista circular)
 
-# Remoção de um registro
-def remova(lista_ligada):
-    if lista_ligada[0] is None:  # Lança excessão quando tenta-se remover registro que já está livre
-        raise ValueError
-    lista_ligada[0] = None
-    anterior = lista_ligada[3]
-    posterior = lista_ligada[4]
-    if posterior is not None:
-        if posterior[0] is None:  # Removendo o próximo registro se está livre
-            lista_ligada[2] += posterior[2]
-            lista_ligada[4] = posterior[4]
-            del posterior[:]
-    if anterior is not None:
-        if anterior[0] is None:  # Removendo o registro anterior se está livre
-            anterior[2] += lista_ligada[2]
-            anterior[4] = posterior
-            del lista_ligada[:]
-
-
-# Essa função recebe como o argumento o nome e o tamanho do processo
-def first_fit(nome, tamanho):
-    global registros
-    registro = registros
-    nao_registrado = True
-    try:
+    # Essa função recebe como o argumento o nome e o tamanho do processo
+    def first_fit(self, nome, tamanho):
+        self.registro = self.registros
+        nao_registrado = True
         while nao_registrado:
             try:
-                insere(nome, tamanho, registro)  # tenta fazer a inserção
+                if self.registro[0] is not None or tamanho > self.registro[2]:
+                    raise ValueError
+                self.registro[0] = nome
+                if tamanho < self.registro[2]:
+                    self.registro[2], self.registro[4] = tamanho, [None, self.registro[1] + tamanho,
+                                                                   self.registro[2] - tamanho,
+                                                                   self.registro, self.registro[4]]
                 nao_registrado = False
             except ValueError:
-                registro = registro[4]  # Passa para o próximo registro quando não consegue
-    except TypeError:
-        print("Não tem espaço para o processo %s" % nome)
+                if self.registro[4] != self.registros:
+                    self.registro = self.registro[4]  # Passa para o próximo registro quando não consegue
+                else:
+                    print "Não tem espaço para o processo %s" % nome
+                    break
+
+    def remova(self, nome):
+        nao_encontrado = True
+        auxiliar = self.registros
+        while nao_encontrado:
+            if auxiliar[0] == nome:
+                if auxiliar[0] is None:  # Lança excessão quando tenta-se remover registro que já está livre
+                    raise ValueError
+                auxiliar[0] = None
+                anterior = auxiliar[3]
+                posterior = auxiliar[4]
+                if posterior != self.registros:
+                    if posterior[0] is None:  # Removendo o próximo registro se está livre
+                        auxiliar[2] += posterior[2]
+                        auxiliar[4] = posterior[4]
+                        del posterior[:]
+                if anterior != self.registros:
+                    if anterior[0] is None:  # Removendo o registro anterior se está livre
+                        anterior[2] += auxiliar[2]
+                        anterior[4] = posterior
+                        del auxiliar[:]
+                nao_encontrado = False
+            auxiliar = auxiliar[4]
+            if auxiliar == self.registros:
+                print "Processo %s não foi encontrado" % nome
+                break
 
 
-registros = [None, 0, 10, None, None]  # Nos registros, é informado que temos 10 unidades de memória livres
-first_fit("proc1", 3)
-first_fit("proc2", 3)
-first_fit("proc3", 3)
-nao_encontrado = True
-registro = registros
-while nao_encontrado:
-    if registro[0] == "proc2":
-        remova(registro)
-        nao_encontrado = False
-    registro = registro[4]
-first_fit("proc4", 3)
-first_fit("proc5", 1)
-print registros
+registro = Registro(10)
+registro.first_fit("proc1", 3)
+registro.first_fit("proc2", 3)
+registro.first_fit("proc3", 3)
+registro.remova("proc2")
+registro.first_fit("proc4", 3)
+registro.first_fit("proc5", 1)
+print registro.registros
