@@ -13,30 +13,37 @@ class Registro(object):
         self.registros.append(None)  # Não tem nome
         self.registros.append(0)  # Posição inicial
         self.registros.append(tamanho)  # Tamanho inicial
-        self.registros.append(self.registros)  # lista anterior (lista circular)
-        self.registros.append(self.registros)  # lista posterior (lista circular)
-
-    # Essa função recebe como o argumento o nome e o tamanho do processo
-    def first_fit(self, nome, tamanho):
-        self.registro = self.registros
+        self.registros.append(None)  # lista anterior (lista circular)
+        self.registros.append(None)  # lista posterior (lista circular)
+        self.ultimo = self.registros
+        
+    def next_fit(self, nome, tamanho):
+        registro = self.ultimo
         nao_registrado = True
         while nao_registrado:
-            try:
-                if self.registro[0] is not None or tamanho > self.registro[2]:
-                    raise ValueError
-                self.registro[0] = nome
-                if tamanho < self.registro[2]:
-                    self.registro[2], self.registro[4] = tamanho, [None, self.registro[1] + tamanho,
-                                                                   self.registro[2] - tamanho,
-                                                                   self.registro, self.registro[4]]
+            if registro[0] is None and tamanho <= registro[2]:
+                registro[0] = nome
+                if tamanho < registro[2]:
+                    registro[2], registro[4] = tamanho, [None, registro[1] + tamanho, registro[2] - tamanho, registro,
+                                                         registro[4]]
+                self.ultimo = registro
                 nao_registrado = False
-            except ValueError:
-                if self.registro[4] != self.registros:
-                    self.registro = self.registro[4]  # Passa para o próximo registro quando não consegue
+            else:
+                if registro[4] is None:
+                    registro = self.registros  # Vai para a primeira lista ligada
                 else:
+                    registro = registro[4]  # Passa para o próximo registro quando não consegue
+                if registro == self.ultimo:  # Para quando iteração passou por todos os elementos
                     print "Não tem espaço para o processo %s" % nome
                     break
 
+    # Essa função recebe como o argumento o nome e o tamanho do processo
+    def first_fit(self, nome, tamanho):
+        self.ultimo = self.registros
+        self.next_fit(nome, tamanho)
+
+
+    
     def remova(self, nome):
         nao_encontrado = True
         auxiliar = self.registros
@@ -64,11 +71,20 @@ class Registro(object):
                 break
 
 
-registro = Registro(10)
-registro.first_fit("proc1", 3)
-registro.first_fit("proc2", 3)
-registro.first_fit("proc3", 3)
-registro.remova("proc2")
-registro.first_fit("proc4", 3)
-registro.first_fit("proc5", 1)
-print registro.registros
+# registro = Registro(10)
+# registro.first_fit("proc1", 3)
+# registro.first_fit("proc2", 3)
+# registro.first_fit("proc3", 3)
+# registro.remova("proc2")
+# registro.first_fit("proc4", 3)
+# registro.first_fit("proc5", 1)
+# print registro.registros
+# 
+# registro = Registro(10)
+# registro.first_fit("proc1", 3)
+# registro.first_fit("proc2", 3)
+# registro.first_fit("proc3", 3)
+# registro.remova("proc2")
+# registro.first_fit("proc4", 3)
+# registro.first_fit("proc5", 1)
+# print registro.registros
