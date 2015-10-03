@@ -93,32 +93,32 @@ class Gerenciador(object):
                 self.mais_requisitados[chave].pop(lista)
             del proximo
 
-print "next fit"
-gerenciador = Gerenciador(10)
-gerenciador.next_fit("proc1", 3)
-gerenciador.next_fit("proc2", 3)
-gerenciador.next_fit("proc3", 3)
-gerenciador.next_fit("proc4", 1)
-print gerenciador.registro_zero.valor.nome
-print gerenciador.inicio.valor.nome
-
-print "first fit"
-gerenciador = Gerenciador(10)
-gerenciador.first_fit("proc1", 3)
-gerenciador.first_fit("proc2", 3)
-gerenciador.first_fit("proc3", 3)
-gerenciador.first_fit("proc4", 1)
-print gerenciador.registro_zero.valor.nome
-print gerenciador.inicio.valor.nome
-
-print "quick fit"
-gerenciador = Gerenciador(10)
-gerenciador.quick_fit("proc1", 3)
-gerenciador.quick_fit("proc2", 3)
-gerenciador.remova("proc1")
-gerenciador.quick_fit("proc3", 3)
-gerenciador.quick_fit("proc4", 3)
-gerenciador.remova("proc3")
-gerenciador.remova("proc2")
-print gerenciador.registro_zero.valor.nome
-print gerenciador.inicio.valor.nome
+# print "next fit"
+# gerenciador = Gerenciador(10)
+# gerenciador.next_fit("proc1", 3)
+# gerenciador.next_fit("proc2", 3)
+# gerenciador.next_fit("proc3", 3)
+# gerenciador.next_fit("proc4", 1)
+# print gerenciador.registro_zero.valor.nome
+# print gerenciador.inicio.valor.nome
+#
+# print "first fit"
+# gerenciador = Gerenciador(10)
+# gerenciador.first_fit("proc1", 3)
+# gerenciador.first_fit("proc2", 3)
+# gerenciador.first_fit("proc3", 3)
+# gerenciador.first_fit("proc4", 1)
+# print gerenciador.registro_zero.valor.nome
+# print gerenciador.inicio.valor.nome
+#
+# print "quick fit"
+# gerenciador = Gerenciador(10)
+# gerenciador.quick_fit("proc1", 3)
+# gerenciador.quick_fit("proc2", 3)
+# gerenciador.remova("proc1")
+# gerenciador.quick_fit("proc3", 3)
+# gerenciador.quick_fit("proc4", 3)
+# gerenciador.remova("proc3")
+# gerenciador.remova("proc2")
+# print gerenciador.registro_zero.valor.nome
+# print gerenciador.inicio.valor.nome
