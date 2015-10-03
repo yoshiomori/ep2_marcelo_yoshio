@@ -93,6 +93,7 @@ class Gerenciador(object):
                 self.mais_requisitados[chave].pop(lista)
             del proximo
 
+# Teste
 # print "next fit"
 # gerenciador = Gerenciador(10)
 # gerenciador.next_fit("proc1", 3)
