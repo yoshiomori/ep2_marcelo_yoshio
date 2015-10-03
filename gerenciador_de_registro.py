@@ -2,7 +2,6 @@
 from lista_ligada import ListaLigada
 from registro import Registro
 
-
 class Gerenciador(object):
     registro_zero = None
     inicio = None
@@ -51,8 +50,48 @@ class Gerenciador(object):
                     self.mais_requisitados[chave] = []
                 self.mais_requisitados[chave].append(self.inicio)
 
+    # Removendo o registro de um certo nome
     def remova(self, nome):
-        raise NotImplementedError
+        # Percorre todos os registros a partir do registro que contem o endereço zero. Se não achou lança erro.
+        lista = self.registro_zero
+        achou = False
+        while not achou:
+            if lista.valor.nome == nome:
+                achou = True
+            else:
+                lista = lista.proximo
+                if lista == self.registro_zero:
+                    raise RuntimeError("Processo %s inexistente" % nome)
+        # Se chegou nesse ponto, a lista contendo o valor nome foi encontrado.
+        # A remoção é feita olhando para os registros vizinhos e fazendo a junção do espaço que vai ficar livre com os
+        # espaços livres vizinhos.
+        # O registro de menor posição será espandido e os outros registros serão removidos.
+        lista.valor.nome = ""
+        anterior = lista.anterior
+        proximo = lista.proximo
+        if lista != self.registro_zero and anterior.valor.nome == "":
+            anterior.valor.tamanho += lista.valor.tamanho
+            anterior.proximo = lista.proximo
+            proximo.anterior = anterior
+            if lista == self.inicio:
+                self.inicio = self.inicio.proximo
+            chaves_candidatas = [chave for chave in self.mais_requisitados.keys() if chave <= lista.valor.tamanho]
+            chave = max(chaves_candidatas) if len(chaves_candidatas) else None
+            if chave is not None:
+                self.mais_requisitados[chave].pop(lista)
+            del lista
+            lista = anterior
+        if lista != self.registro_zero.anterior and proximo.valor.nome == "":
+            lista.valor.tamanho += proximo.valor.tamanho
+            lista.proximo = proximo.proximo
+            proximo.proximo.anterior = lista
+            if proximo == self.inicio:
+                self.inicio = self.inicio.proximo
+            chaves_candidatas = [chave for chave in self.mais_requisitados.keys() if chave <= proximo.valor.tamanho]
+            chave = max(chaves_candidatas) if len(chaves_candidatas) else None
+            if chave is not None:
+                self.mais_requisitados[chave].pop(lista)
+            del proximo
 
 print "next fit"
 gerenciador = Gerenciador(10)
@@ -76,7 +115,10 @@ print "quick fit"
 gerenciador = Gerenciador(10)
 gerenciador.quick_fit("proc1", 3)
 gerenciador.quick_fit("proc2", 3)
+gerenciador.remova("proc1")
 gerenciador.quick_fit("proc3", 3)
-gerenciador.quick_fit("proc4", 1)
+gerenciador.quick_fit("proc4", 3)
+gerenciador.remova("proc3")
+gerenciador.remova("proc2")
 print gerenciador.registro_zero.valor.nome
 print gerenciador.inicio.valor.nome
