@@ -2,14 +2,26 @@
 from lista_ligada import ListaLigada
 from registro import Registro
 
+
 class Gerenciador(object):
     registro_zero = None
     inicio = None
+    fit = None
 
     def __init__(self, tamanho):
         self.registro_zero = ListaLigada(Registro(tamanho=tamanho))
         self.inicio = self.registro_zero
         self.mais_requisitados = {}
+
+    def faz_fit(self, num):
+        if num == "1":
+            self.fit = self.first_fit
+        elif num == "2":
+            self.fit = self.next_fit
+        elif num == "3":
+            self.fit = self.quick_fit
+        else:
+            raise RuntimeError("Argumento %s não é válido" % num)
         
     def next_fit(self, nome, tamanho):
         registrado = False
