@@ -65,7 +65,7 @@ class Simulador(Cmd):
         self.inicio = time()
         for processo in self.processos:
             self.espere(processo["t0"])
-            Thread(target=self.processe, args=(processo,)).run()
+            Thread(target=self.processe, args=(processo,)).start()
 
     def do_sai(self, arg):
         return True
