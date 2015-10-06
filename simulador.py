@@ -1,9 +1,16 @@
 # coding=utf-8
 from re import match, findall
 from cmd import Cmd
-from threading import Thread, Semaphore
+from threading import Thread, Semaphore, active_count, current_thread
 from gerenciador_de_espaco import Gerenciador
 from time import sleep, time
+
+
+def inicia_arquivo(nome_arquivo, tamanho):
+    arquivo = open(nome_arquivo, 'wb')
+    for i in range(tamanho):
+        arquivo.write(bytearray([255]))  # 255 é o valor decimal de -1 em binário com um byte
+    arquivo.close()
 
 
 class Simulador(Cmd):
@@ -20,7 +27,9 @@ class Simulador(Cmd):
         if s > 0:
             sleep(s)
 
-    def processe(self, processo):
+    def processe(self, i, processo):
+        # O processo fica dormindo até a hora de começar
+        self.espere(processo["t0"])
         # O processo faz a solicitação de memória
         # Só um processo pode chamar a função fit por vez, controle de concorrência da memória implementado
         self.semaforo.acquire()
@@ -31,13 +40,14 @@ class Simulador(Cmd):
         # Faz o acesso a memória
         for p, t in processo["posicao_tempo"]:
             self.espere(t)
-            print "Faz acesso a posição %d" % p
+            print "Faz acesso a posição %d escrevendo %d" % (p, i)
 
         # Esperar até a hora que o processo finaliza
         self.espere(processo["tf"])
         self.semaforo.acquire()
         self.gerenciador.remova(processo["nome"])
         self.semaforo.release()
+        print "Tchau processo %s" % processo["nome"]
 
     def do_carrega(self, arg):
         """Carrega um arquivo trace"""
@@ -63,9 +73,11 @@ class Simulador(Cmd):
     def do_executa(self, arg):
         print "executando intervalo %s" % arg
         self.inicio = time()
-        for processo in self.processos:
-            self.espere(processo["t0"])
-            Thread(target=self.processe, args=(processo,)).start()
+        for i, processo in enumerate(self.processos):
+            Thread(target=self.processe, args=(i, processo)).start()
+        while active_count() > 1:
+            print "Relógio: %d" % int(time() - self.inicio + 1)
+            sleep(1)
 
     def do_sai(self, arg):
         return True
