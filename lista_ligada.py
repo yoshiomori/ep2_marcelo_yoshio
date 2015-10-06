@@ -1,14 +1,9 @@
-from registro import Registro
-
-
 class ListaLigada(object):
     valor = None
     proximo = None
     anterior = None
 
     def __init__(self, valor):
-        if type(valor) is not Registro:
-            raise TypeError
         self.valor = valor
         self.proximo = self
         self.anterior = self
@@ -22,3 +17,7 @@ class ListaLigada(object):
         lista.anterior = self
         lista_anterior.proximo = self_proximo
         self_proximo.anterior = lista_anterior
+
+    def remova(self):
+        self.proximo.anterior = self.anterior
+        self.anterior.proximo = self.proximo

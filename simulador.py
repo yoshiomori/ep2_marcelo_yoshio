@@ -61,7 +61,7 @@ class Simulador(Cmd):
                 processo["posicao_tempo"].append([int(info.group(1)), int(info.group(2))])
             self.processos.append(processo)
         trace.close()
-        self.gerenciador = Gerenciador(self.virtual)
+        self.gerenciador = Gerenciador(self.total, self.virtual)
 
     def do_espaco(self, arg):
         print "espaço num %s" % arg

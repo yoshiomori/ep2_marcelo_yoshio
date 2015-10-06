@@ -2,16 +2,22 @@
 from lista_ligada import ListaLigada
 from registro import Registro
 
+tamanho_pagina = 10
+
 
 class Gerenciador(object):
     registro_zero = None
     inicio = None
     fit = None
+    quadro_ocupado = None
 
-    def __init__(self, tamanho):
-        self.registro_zero = ListaLigada(Registro(tamanho=tamanho))
+    def __init__(self, total, virtual):
+        self.registro_zero = ListaLigada(Registro(tamanho=virtual))
         self.inicio = self.registro_zero
         self.mais_requisitados = {}
+        self.quadro_livre = ListaLigada({'quadro': 0, 'pagina': None, 'R': False, 'M': False})
+        for i in range(1, total / tamanho_pagina - 1):
+            self.quadro_livre.faz_proximo(ListaLigada({'quadro': i, 'pagina': None, 'R': False, 'M': False}))
 
     def faz_fit(self, num):
         if num == "1":
@@ -83,27 +89,35 @@ class Gerenciador(object):
         proximo = lista.proximo
         if lista != self.registro_zero and anterior.valor.nome == "":
             anterior.valor.tamanho += lista.valor.tamanho
-            anterior.proximo = lista.proximo
-            proximo.anterior = anterior
+            # Removendo todas as referências para a lista
             if lista == self.inicio:
                 self.inicio = self.inicio.proximo
-            chaves_candidatas = [chave for chave in self.mais_requisitados.keys() if chave <= lista.valor.tamanho]
-            chave = max(chaves_candidatas) if len(chaves_candidatas) else None
-            if chave is not None:
-                self.mais_requisitados[chave].pop(lista)
-            del lista
+            lista.remova()
             lista = anterior
+            # Como o tamanho do registro vazio vai mudar, teremos que reinserir nos mais requisitados, para isso
+            # vamos remover primeiro
+            chaves_candidatas = [chave for chave in self.mais_requisitados.keys() if chave <= lista.valor.tamanho]
+            if len(chaves_candidatas):
+                chave = max(chaves_candidatas)
+                if lista in self.mais_requisitados[chave]:
+                    self.mais_requisitados[chave].pop(lista)
         if lista != self.registro_zero.anterior and proximo.valor.nome == "":
             lista.valor.tamanho += proximo.valor.tamanho
-            lista.proximo = proximo.proximo
-            proximo.proximo.anterior = lista
+            # Removendo todas as referencias para a lista proximo
             if proximo == self.inicio:
                 self.inicio = self.inicio.proximo
+            # Pode ser que a lista removida esteja num dos conjuntos dos mais requisitados, então vamos verificar.
             chaves_candidatas = [chave for chave in self.mais_requisitados.keys() if chave <= proximo.valor.tamanho]
-            chave = max(chaves_candidatas) if len(chaves_candidatas) else None
-            if chave is not None:
-                self.mais_requisitados[chave].pop(lista)
-            del proximo
+            if len(chaves_candidatas):
+                chave = max(chaves_candidatas)
+                if lista in self.mais_requisitados[chave]:
+                    self.mais_requisitados[chave].pop(lista)  # Se a lista está referenciada nesse conjuto então remova
+            proximo.remova()
+        # E agora que temos uma lista livre de tamanho atualizado, vamos re inserir num conjuto de tamanho maior
+        chaves_candidatas = [chave for chave in self.mais_requisitados.keys() if chave <= lista.valor.tamanho]
+        if len(chaves_candidatas):
+            chave = max(chaves_candidatas)
+            self.mais_requisitados[chave].append(self.inicio)
 
 # Teste
 # print "next fit"
@@ -125,7 +139,7 @@ class Gerenciador(object):
 # print gerenciador.inicio.valor.nome
 #
 # print "quick fit"
-# gerenciador = Gerenciador(10)
+# gerenciador = Gerenciador(4, 10)
 # gerenciador.quick_fit("proc1", 3)
 # gerenciador.quick_fit("proc2", 3)
 # gerenciador.remova("proc1")
