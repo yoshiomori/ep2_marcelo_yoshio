@@ -1,8 +1,7 @@
 # coding=utf-8
 from lista_ligada import ListaLigada
-from registro import Registro
 
-tamanho_pagina = 10
+unidades_alocacao = 10
 
 
 class Gerenciador(object):
@@ -12,12 +11,13 @@ class Gerenciador(object):
     quadro_ocupado = None
 
     def __init__(self, total, virtual):
-        self.registro_zero = ListaLigada(Registro(tamanho=virtual))
+        self.registro_zero = ListaLigada({'processo': None, 'posicao inicial': 0, 'tamanho': virtual})
         self.inicio = self.registro_zero
         self.mais_requisitados = {}
-        self.quadro_livre = ListaLigada({'quadro': 0, 'pagina': None, 'R': False, 'M': False})
-        for i in range(1, total / tamanho_pagina - 1):
-            self.quadro_livre.faz_proximo(ListaLigada({'quadro': i, 'pagina': None, 'R': False, 'M': False}))
+        self.paginas = ListaLigada({'quadro': None, 'pagina': 0, 'presente': False, 'R': False, 'M': False})
+        # O tamanho da pagina é de 16 bits
+        for i in range(1, virtual / 16 - 1):
+            self.paginas.faz_proximo(ListaLigada({'quadro': None, 'pagina': i, 'R': False, 'M': False}))
 
     def faz_fit(self, num):
         if num == "1":
@@ -28,21 +28,22 @@ class Gerenciador(object):
             self.fit = self.quick_fit
         else:
             raise RuntimeError("Argumento %s não é válido" % num)
-        
+
     def next_fit(self, nome, tamanho):
-        registrado = False
-        lista = self.inicio
-        while not registrado:
-            try:
-                resto = lista.valor.insere(nome, tamanho)
-                if resto is not None:
-                    lista.faz_proximo(ListaLigada(resto))
-                registrado = True
-            except RuntimeError:
-                lista = lista.proximo
-                if lista == self.inicio:
-                    raise RuntimeError("Não há espaço para o processo %s" % nome)
-        self.inicio = lista.proximo
+        # Busca uma lista vazia de no mínimo um certo tamanho a partir de uma lista inicial
+        lista_encontrada = self.inicio.busca(
+            lambda lista: lista.valor['processo'] is None and lista.valor['tamanho'] >= tamanho)
+        if lista_encontrada is None:
+            raise RuntimeError("Não há espaço para o processo %s" % nome)
+        else:
+            tamanho_restante = lista_encontrada.valor['tamanho'] - tamanho
+            lista_encontrada.valor['processo'] = nome
+            lista_encontrada.valor['tamanho'] = tamanho
+            if tamanho_restante:
+                lista_encontrada.faz_proximo(ListaLigada(
+                    {'processo': None, 'posicao inicial': lista_encontrada.valor['posicao inicial'] + tamanho,
+                     'tamanho': tamanho_restante}))
+            self.inicio = lista_encontrada.proximo
 
     # Essa função recebe como o argumento o nome e o tamanho do processo
     def first_fit(self, nome, tamanho):
@@ -58,10 +59,10 @@ class Gerenciador(object):
                 self.mais_requisitados.pop(chave)
         self.next_fit(nome, tamanho)
         # Se sobrou espaço livre vou tentar guardar esse espaço no maior tamanho dos mais requisitados
-        if self.inicio.valor.nome == "":
-            tamanho_restante = self.inicio.valor.tamanho
+        if self.inicio.valor['processo'] == "":
+            tamanho_restante = self.inicio.valor['tamanho']
             chaves_candidatas = [chave for chave in self.mais_requisitados.keys() if chave <= tamanho_restante]
-            chave = max(chaves_candidatas) if len(chaves_candidatas) else tamanho if tamanho >= tamanho_restante\
+            chave = max(chaves_candidatas) if len(chaves_candidatas) else tamanho if tamanho >= tamanho_restante \
                 else None
             if chave is not None:
                 if chave not in self.mais_requisitados.keys():
@@ -71,50 +72,47 @@ class Gerenciador(object):
     # Removendo o registro de um certo nome
     def remova(self, nome):
         # Percorre todos os registros a partir do registro que contem o endereço zero. Se não achou lança erro.
-        lista = self.registro_zero
-        achou = False
-        while not achou:
-            if lista.valor.nome == nome:
-                achou = True
-            else:
-                lista = lista.proximo
-                if lista == self.registro_zero:
-                    raise RuntimeError("Processo %s inexistente" % nome)
+        lista_encontrada = self.registro_zero.busca(lambda lista: lista.valor['processo'] == nome)
+        if lista_encontrada is None:
+            raise RuntimeError("Processo %s inexistente" % nome)
         # Se chegou nesse ponto, a lista contendo o valor nome foi encontrado.
         # A remoção é feita olhando para os registros vizinhos e fazendo a junção do espaço que vai ficar livre com os
         # espaços livres vizinhos.
         # O registro de menor posição será espandido e os outros registros serão removidos.
-        lista.valor.nome = ""
-        anterior = lista.anterior
-        proximo = lista.proximo
-        if lista != self.registro_zero and anterior.valor.nome == "":
-            anterior.valor.tamanho += lista.valor.tamanho
+        lista_encontrada.valor['processo'] = ""
+        anterior = lista_encontrada.anterior
+        proximo = lista_encontrada.proximo
+        if lista_encontrada != self.registro_zero and anterior.valor['processo'] == "":
+            anterior.valor['tamanho'] += lista_encontrada.valor['tamanho']
             # Removendo todas as referências para a lista
-            if lista == self.inicio:
+            if lista_encontrada == self.inicio:
                 self.inicio = self.inicio.proximo
-            lista.remova()
-            lista = anterior
+            lista_encontrada.remova()
+            lista_encontrada = anterior
             # Como o tamanho do registro vazio vai mudar, teremos que reinserir nos mais requisitados, para isso
             # vamos remover primeiro
-            chaves_candidatas = [chave for chave in self.mais_requisitados.keys() if chave <= lista.valor.tamanho]
+            chaves_candidatas = [chave for chave in self.mais_requisitados.keys() if
+                                 chave <= lista_encontrada.valor['tamanho']]
             if len(chaves_candidatas):
                 chave = max(chaves_candidatas)
-                if lista in self.mais_requisitados[chave]:
-                    self.mais_requisitados[chave].pop(lista)
-        if lista != self.registro_zero.anterior and proximo.valor.nome == "":
-            lista.valor.tamanho += proximo.valor.tamanho
+                if lista_encontrada in self.mais_requisitados[chave]:
+                    self.mais_requisitados[chave].pop(lista_encontrada)
+        if lista_encontrada != self.registro_zero.anterior and proximo.valor['processo'] == "":
+            lista_encontrada.valor['tamanho'] += proximo.valor['tamanho']
             # Removendo todas as referencias para a lista proximo
             if proximo == self.inicio:
                 self.inicio = self.inicio.proximo
             # Pode ser que a lista removida esteja num dos conjuntos dos mais requisitados, então vamos verificar.
-            chaves_candidatas = [chave for chave in self.mais_requisitados.keys() if chave <= proximo.valor.tamanho]
+            chaves_candidatas = [chave for chave in self.mais_requisitados.keys() if chave <= proximo.valor['tamanho']]
             if len(chaves_candidatas):
                 chave = max(chaves_candidatas)
-                if lista in self.mais_requisitados[chave]:
-                    self.mais_requisitados[chave].pop(lista)  # Se a lista está referenciada nesse conjuto então remova
+                if lista_encontrada in self.mais_requisitados[chave]:
+                    self.mais_requisitados[chave].pop(
+                        lista_encontrada)  # Se a lista está referenciada nesse conjuto então remova
             proximo.remova()
         # E agora que temos uma lista livre de tamanho atualizado, vamos re inserir num conjuto de tamanho maior
-        chaves_candidatas = [chave for chave in self.mais_requisitados.keys() if chave <= lista.valor.tamanho]
+        chaves_candidatas = [chave for chave in self.mais_requisitados.keys() if
+                             chave <= lista_encontrada.valor['tamanho']]
         if len(chaves_candidatas):
             chave = max(chaves_candidatas)
             self.mais_requisitados[chave].append(self.inicio)

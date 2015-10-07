@@ -21,3 +21,11 @@ class ListaLigada(object):
     def remova(self):
         self.proximo.anterior = self.anterior
         self.anterior.proximo = self.proximo
+
+    def busca(self, condicao):
+        lista = self
+        while not condicao(lista):
+            lista = lista.proximo
+            if lista == self:
+                return None
+        return lista
