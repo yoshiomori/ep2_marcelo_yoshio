@@ -33,14 +33,14 @@ class Simulador(Cmd):
         # O processo faz a solicitação de memória
         # Só um processo pode chamar a função fit por vez, controle de concorrência da memória implementado
         self.semaforo.acquire()
-        self.gerenciador.fit(processo["nome"], processo["b"])
+        base = self.gerenciador.fit(processo["nome"], processo["b"])
         self.semaforo.release()
         print processo["nome"]
 
         # Faz o acesso a memória
         for p, t in processo["posicao_tempo"]:
             self.espere(t)
-            print "Faz acesso a posição %d escrevendo %d" % (p, i)
+            print "Faz acesso a posição %d(%d) escrevendo %d" % (p, self.gerenciador.traduz_endereco(p + base), i)
 
         # Esperar até a hora que o processo finaliza
         self.espere(processo["tf"])
@@ -64,11 +64,10 @@ class Simulador(Cmd):
         self.gerenciador = Gerenciador(self.total, self.virtual)
 
     def do_espaco(self, arg):
-        print "espaço num %s" % arg
         self.gerenciador.faz_fit(arg)
 
     def do_substitui(self, arg):
-        print "substituindo num %s" % arg
+        self.gerenciador.faz_substituicao(arg)
 
     def do_executa(self, arg):
         print "executando intervalo %s" % arg
@@ -76,7 +75,14 @@ class Simulador(Cmd):
         for i, processo in enumerate(self.processos):
             Thread(target=self.processe, args=(i, processo)).start()
         while active_count() > 1:
-            print "Relógio: %d" % int(time() - self.inicio + 1)
+            relogio = int(time() - self.inicio + 1)
+            for i in range(len(self.gerenciador.contador)):
+                if self.gerenciador.r_m[i] & 2 == 2:  # só vai incrementar o contador da página i se r for 1
+                    self.gerenciador.contador[i] += 1
+            if relogio % 15:  # De tempos em tempos eu zero o bit de referencia
+                for i in range(len(self.gerenciador.r_m)):
+                    self.gerenciador.r_m[i] &= 1
+            print "Relógio: %d" % relogio
             sleep(1)
 
     def do_sai(self, arg):
