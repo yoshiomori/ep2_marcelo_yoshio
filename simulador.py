@@ -4,6 +4,7 @@ from cmd import Cmd
 from threading import Thread, Semaphore, active_count, current_thread
 from gerenciador_de_espaco import Gerenciador
 from time import sleep, time
+from memoria import Memoria
 
 
 def inicia_arquivo(nome_arquivo, tamanho):
@@ -15,8 +16,8 @@ def inicia_arquivo(nome_arquivo, tamanho):
 
 class Simulador(Cmd):
     prompt = '[Ep2]: '
-    total = 0
-    virtual = 0
+    total = None
+    virtual = None
     processos = []
     inicio = 0
     gerenciador = None
@@ -41,6 +42,7 @@ class Simulador(Cmd):
         for p, t in processo["posicao_tempo"]:
             self.espere(t)
             print "Faz acesso a posição %d(%d) escrevendo %d" % (p, self.gerenciador.traduz_endereco(p + base), i)
+            self.total.escreve(self.gerenciador.traduz_endereco(p + base), bytearray([i]))
 
         # Esperar até a hora que o processo finaliza
         self.espere(processo["tf"])
@@ -52,7 +54,9 @@ class Simulador(Cmd):
     def do_carrega(self, arg):
         """Carrega um arquivo trace"""
         trace = open(arg)
-        self.total, self.virtual = map(int, trace.readline().split())
+        total, virtual = map(int, trace.readline().split())
+        self.total = Memoria(total, 'mem')
+        self.virtual = Memoria(virtual, 'vir')
         for line in trace.readlines():
             info = match(r"(\d+) (\w+) (\d+) (\d+) (.+)", line)
             processo = dict(t0=int(info.group(1)), nome=info.group(2), tf=int(info.group(3)), b=int(info.group(4)),

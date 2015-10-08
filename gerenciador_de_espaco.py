@@ -19,7 +19,9 @@ class Gerenciador(object):
     contador = [0]  # Usado para armazenar o contador de cada página
 
     def __init__(self, total, virtual):
-        numero_paginas = virtual / 16  # O tamanho de uma página é 16 bits
+        self.total = total
+        self.virtual = virtual
+        numero_paginas = virtual.tamanho / 16  # O tamanho de uma página é 16 bits
 
         # Lista dublamente encadeada informando regiões livres na memória virtual
         self.registro_zero = ListaLigada({'processo': None, 'posicao inicial': 0, 'tamanho': numero_paginas * 16})
@@ -40,7 +42,7 @@ class Gerenciador(object):
 
         # As páginas são inicializados conforme o tamanho da memória física
         self.quadro = ListaLigada({'quadro': 0, 'pagina': None})
-        for i in range(1, total / 16 - 1):
+        for i in range(1, total.tamanho / 16 - 1):
             self.quadro.faz_proximo(ListaLigada({'quadro': i, 'pagina': None}))
 
     def traduz_endereco(self, endereco):
@@ -51,8 +53,9 @@ class Gerenciador(object):
             quadro = self.substituicao()  # Usando uma algoritmo de substituição seleciona um quadro
             if quadro.valor['pagina'] is not None:
                 if self.r_m[quadro.valor['pagina']] & 1:  # Tratando o caso que a pagina do quadro foi modificado
-                    # TODO: escrever escrever na memória virtual o conteudo do quadro da memória fisica
-                    pass
+                    # Escreve na memória virtual o conteudo do quadro da memória fisica
+                    self.virtual.escreve(quadro.valor['pagina'] >> self.comprimento_offset,
+                                         self.total.le(quadro.valor['quadro'] << self.comprimento_offset, 16))
                 self.pagina_presente[quadro.valor['pagina']] = False
             quadro.valor['pagina'] = pagina
             self.pagina_presente[pagina] = True
