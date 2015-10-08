@@ -41,8 +41,10 @@ class Simulador(Cmd):
         # Faz o acesso a memória
         for p, t in processo["posicao_tempo"]:
             self.espere(t)
+            self.semaforo.acquire()
             print "Faz acesso a posição %d(%d) escrevendo %d" % (p, self.gerenciador.traduz_endereco(p + base), i)
             self.total.escreve(self.gerenciador.traduz_endereco(p + base), bytearray([i]))
+            self.semaforo.release()
 
         # Esperar até a hora que o processo finaliza
         self.espere(processo["tf"])
