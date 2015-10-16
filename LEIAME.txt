@@ -1,0 +1,10 @@
+Para executar: python2 ep2.py [arquivo de trace]
+
+Se o arquivo de trace não for passado, será
+criado um prompt, conforme especificado no enunciado.
+
+Caso contrário, será feita a simulação de processos
+com intervalo de 3 segundos, algoritmo para gerência
+de espaço livre 1 (First Fit) e algoritmo de
+substituição de página 1 (Not Recently Used Page).
+
