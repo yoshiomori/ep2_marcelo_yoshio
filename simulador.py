@@ -94,9 +94,9 @@ class Simulador(Cmd):
                 for i in range(len(self.gerenciador.r_m)):
                     self.gerenciador.r_m[i] &= 1
 
-                    # Também imprimo o estado da memória
-                    print self.memoria_fisica.le(0, self.total)
-                    print self.memoria_virtual.le(0, self.virtual)
+                    print ":".join("{:02x}".format(ord(c)) for c in self.memoria_fisica.le(0, self.total))
+                    print ":".join("{:02x}".format(ord(c)) for c in self.memoria_virtual.le(0, self.virtual))
+
                     lista = self.gerenciador.registro_zero
                     print 'nome do processo: %s\nposição inicial: %d\ntamanho: %d\n\n' % (
                         lista.valor['processo'], lista.valor['posicao inicial'], lista.valor['tamanho'])
