@@ -15,13 +15,18 @@ def inicia_arquivo(nome_arquivo, tamanho):
 
 
 class Simulador(Cmd):
-    prompt = '[Ep2]: '
-    total = None
-    virtual = None
-    processos = []
-    inicio = 0
-    gerenciador = None
-    semaforo = Semaphore(1)
+
+    def __init__(self):
+        Cmd.__init__(self)
+        self.prompt = '[Ep2]: '
+        self.total = None
+        self.virtual = None
+        self.memoria_fisica = None
+        self.memoria_virtual = None
+        self.processos = []
+        self.inicio = 0
+        self.gerenciador = None
+        self.semaforo = Semaphore(1)
 
     def espere(self, t):
         s = t - int(time() - self.inicio)
@@ -43,7 +48,7 @@ class Simulador(Cmd):
             self.espere(t)
             self.semaforo.acquire()
             print "Faz acesso a posição %d(%d) escrevendo %d" % (p, self.gerenciador.traduz_endereco(p + base), i)
-            self.total.escreve(self.gerenciador.traduz_endereco(p + base), bytearray([i]))
+            self.memoria_fisica.escreve(self.gerenciador.traduz_endereco(p + base), bytearray([i]))
             self.semaforo.release()
 
         # Esperar até a hora que o processo finaliza
@@ -56,9 +61,9 @@ class Simulador(Cmd):
     def do_carrega(self, arg):
         """Carrega um arquivo trace"""
         trace = open(arg)
-        total, virtual = map(int, trace.readline().split())
-        self.total = Memoria(total, 'mem')
-        self.virtual = Memoria(virtual, 'vir')
+        self.total, self.virtual = map(int, trace.readline().split())
+        self.memoria_fisica = Memoria(self.total, 'mem')
+        self.memoria_virtual = Memoria(self.virtual, 'vir')
         for line in trace.readlines():
             info = match(r"(\d+) (\w+) (\d+) (\d+) (.+)", line)
             processo = dict(t0=int(info.group(1)), nome=info.group(2), tf=int(info.group(3)), b=int(info.group(4)),
@@ -67,7 +72,7 @@ class Simulador(Cmd):
                 processo["posicao_tempo"].append([int(info.group(1)), int(info.group(2))])
             self.processos.append(processo)
         trace.close()
-        self.gerenciador = Gerenciador(self.total, self.virtual)
+        self.gerenciador = Gerenciador(self.memoria_fisica, self.memoria_virtual)
 
     def do_espaco(self, arg):
         self.gerenciador.faz_fit(arg)
@@ -88,6 +93,18 @@ class Simulador(Cmd):
             if relogio % 15:  # De tempos em tempos eu zero o bit de referencia
                 for i in range(len(self.gerenciador.r_m)):
                     self.gerenciador.r_m[i] &= 1
+
+                    # Também imprimo o estado da memória
+                    print self.memoria_fisica.le(0, self.total)
+                    print self.memoria_virtual.le(0, self.virtual)
+                    lista = self.gerenciador.registro_zero
+                    print 'nome do processo: %s\nposição inicial: %d\ntamanho: %d\n\n' % (
+                        lista.valor['processo'], lista.valor['posicao inicial'], lista.valor['tamanho'])
+                    lista = lista.proximo
+                    while lista != self.gerenciador.registro_zero:
+                        print 'nome do processo: %s\nposição inicial: %d\ntamanho: %d\n\n' % (
+                            lista.valor['processo'], lista.valor['posicao inicial'], lista.valor['tamanho'])
+                        lista = lista.proximo
             print "Relógio: %d" % relogio
             sleep(1)
 
