@@ -39,8 +39,8 @@ class Simulador(Cmd):
         # O processo faz a solicitação de memória
         # Só um processo pode chamar a função fit por vez, controle de concorrência da memória implementado
         self.semaforo.acquire()
-        base = self.gerenciador.fit(processo["nome"], processo["b"])
-        self.memoria_virtual.escreve(base, bytearray([i] * 16))
+        base, tamanho_alocado = self.gerenciador.fit(processo["nome"], processo["b"])
+        self.memoria_virtual.escreve(base, bytearray([i] * tamanho_alocado))
         self.semaforo.release()
         print processo["nome"]
 

@@ -94,7 +94,7 @@ class Gerenciador(object):
                     {'processo': None, 'posicao inicial': lista_encontrada.valor['posicao inicial'] + tamanho,
                      'tamanho': tamanho_restante}))
             self.inicio = lista_encontrada.proximo
-            return lista_encontrada.valor['posicao inicial']
+            return lista_encontrada.valor['posicao inicial'], lista_encontrada.valor['tamanho']
 
     # Essa função recebe como o argumento o nome e o tamanho do processo
     def first_fit(self, nome, tamanho):
@@ -108,7 +108,7 @@ class Gerenciador(object):
             self.inicio = self.mais_requisitados[chave].pop()
             if len(self.mais_requisitados[chave]) == 0:
                 self.mais_requisitados.pop(chave)
-        base = self.next_fit(nome, tamanho)
+        base, tamanho_alocado = self.next_fit(nome, tamanho)
         # Se sobrou espaço livre vou tentar guardar esse espaço no maior tamanho dos mais requisitados
         if self.inicio.valor['processo'] == "":
             tamanho_restante = self.inicio.valor['tamanho']
@@ -119,7 +119,7 @@ class Gerenciador(object):
                 if chave not in self.mais_requisitados.keys():
                     self.mais_requisitados[chave] = []
                 self.mais_requisitados[chave].append(self.inicio)
-        return base
+        return base, tamanho_alocado
 
     # Removendo o registro de um certo nome
     def remova(self, nome):
