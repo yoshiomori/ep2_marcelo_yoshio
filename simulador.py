@@ -93,7 +93,9 @@ class Simulador(Cmd):
             if relogio % int(arg):  # De tempos em tempos eu zero o bit de referencia
                 for i in range(len(self.gerenciador.r_m)):
                     self.gerenciador.r_m[i] &= 1
+            print('-----------------------------memória física------------------------')
             print ":".join("{:02x}".format(ord(c)) for c in self.memoria_fisica.le(0, self.total))
+            print('-----------------------------memória virtual------------------------')
             print ":".join("{:02x}".format(ord(c)) for c in self.memoria_virtual.le(0, self.virtual))
 
             lista = self.gerenciador.registro_zero
