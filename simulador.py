@@ -90,7 +90,7 @@ class Simulador(Cmd):
             for i in range(len(self.gerenciador.contador)):
                 if self.gerenciador.r_m[i] & 2 == 2:  # só vai incrementar o contador da página i se r for 1
                     self.gerenciador.contador[i] += 1
-            if relogio % 15:  # De tempos em tempos eu zero o bit de referencia
+            if relogio % int(arg):  # De tempos em tempos eu zero o bit de referencia
                 for i in range(len(self.gerenciador.r_m)):
                     self.gerenciador.r_m[i] &= 1
 
