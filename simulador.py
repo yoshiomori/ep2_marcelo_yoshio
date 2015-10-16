@@ -40,6 +40,7 @@ class Simulador(Cmd):
         # Só um processo pode chamar a função fit por vez, controle de concorrência da memória implementado
         self.semaforo.acquire()
         base = self.gerenciador.fit(processo["nome"], processo["b"])
+        self.memoria_virtual.escreve(base, bytearray([i] * 16))
         self.semaforo.release()
         print processo["nome"]
 
@@ -48,7 +49,8 @@ class Simulador(Cmd):
             self.espere(t)
             self.semaforo.acquire()
             print "Faz acesso a posição %d(%d) escrevendo %d" % (p, self.gerenciador.traduz_endereco(p + base), i)
-            self.memoria_fisica.escreve(self.gerenciador.traduz_endereco(p + base), bytearray([i]))
+            # self.gerenciador.traduz_endereco retorna a primeira posição do quadro da memória física
+            self.memoria_fisica.escreve(self.gerenciador.traduz_endereco(p + base), bytearray([i] * 16))
             self.semaforo.release()
 
         # Esperar até a hora que o processo finaliza

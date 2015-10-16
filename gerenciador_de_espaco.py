@@ -61,7 +61,8 @@ class Gerenciador(object):
             self.pagina_presente[pagina] = True
             self.tabela_pagina[pagina] = quadro.valor['quadro']
         quadro = self.tabela_pagina[pagina]
-        return quadro << self.comprimento_offset | self.mascara & endereco
+        # return quadro << self.comprimento_offset | self.mascara & endereco
+        return quadro
 
     def fit(self, nome, tamanho):
         # Atualizando tamanho para corresponder a um multiplo de páginhas
