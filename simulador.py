@@ -90,21 +90,20 @@ class Simulador(Cmd):
             for i in range(len(self.gerenciador.contador)):
                 if self.gerenciador.r_m[i] & 2 == 2:  # só vai incrementar o contador da página i se r for 1
                     self.gerenciador.contador[i] += 1
-            if relogio % 15:  # De tempos em tempos eu zero o bit de referencia
+            if relogio % int(arg):  # De tempos em tempos eu zero o bit de referencia
                 for i in range(len(self.gerenciador.r_m)):
                     self.gerenciador.r_m[i] &= 1
+            print ":".join("{:02x}".format(ord(c)) for c in self.memoria_fisica.le(0, self.total))
+            print ":".join("{:02x}".format(ord(c)) for c in self.memoria_virtual.le(0, self.virtual))
 
-                    print ":".join("{:02x}".format(ord(c)) for c in self.memoria_fisica.le(0, self.total))
-                    print ":".join("{:02x}".format(ord(c)) for c in self.memoria_virtual.le(0, self.virtual))
-
-                    lista = self.gerenciador.registro_zero
-                    print 'nome do processo: %s\nposição inicial: %d\ntamanho: %d\n\n' % (
-                        lista.valor['processo'], lista.valor['posicao inicial'], lista.valor['tamanho'])
-                    lista = lista.proximo
-                    while lista != self.gerenciador.registro_zero:
-                        print 'nome do processo: %s\nposição inicial: %d\ntamanho: %d\n\n' % (
-                            lista.valor['processo'], lista.valor['posicao inicial'], lista.valor['tamanho'])
-                        lista = lista.proximo
+            lista = self.gerenciador.registro_zero
+            print 'nome do processo: %s\nposição inicial: %d\ntamanho: %d\n\n' % (
+                lista.valor['processo'], lista.valor['posicao inicial'], lista.valor['tamanho'])
+            lista = lista.proximo
+            while lista != self.gerenciador.registro_zero:
+                print 'nome do processo: %s\nposição inicial: %d\ntamanho: %d\n\n' % (
+                    lista.valor['processo'], lista.valor['posicao inicial'], lista.valor['tamanho'])
+                lista = lista.proximo
             print "Relógio: %d" % relogio
             sleep(1)
 
